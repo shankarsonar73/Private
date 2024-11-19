@@ -364,6 +364,97 @@ public class Client {
 }
 ```
 
----
 
-This is the full content of the README file you requested. You can copy and paste this entire block at once.
+
+
+```markdown
+# FactorialPrimeApplet
+
+This project contains an applet that allows users to calculate the factorial of a number and check if a number is prime.
+
+## Files
+
+### 1. FactorialPrimeApplet.java
+
+This Java applet provides a user interface with buttons for calculating the factorial of a number and checking if a number is prime.
+
+```java
+import java.applet.*;
+import java.awt.*;
+import java.awt.event.*;
+
+public class FactorialPrimeApplet extends Applet implements ActionListener {
+    TextField inputField;
+    Button factorialButton, primeButton;
+    Label resultLabel;
+
+    public void init() {
+        inputField = new TextField(10);
+        factorialButton = new Button("Calculate Factorial");
+        primeButton = new Button("Check Prime");
+        resultLabel = new Label("Result will be displayed here");
+
+        add(new Label("Enter a number:"));
+        add(inputField);
+        add(factorialButton);
+        add(primeButton);
+        add(resultLabel);
+
+        // Set action listeners
+        factorialButton.addActionListener(this);
+        primeButton.addActionListener(this);
+    }
+
+    public void actionPerformed(ActionEvent e) {
+        try {
+            int number = Integer.parseInt(inputField.getText());
+            if (e.getSource() == factorialButton) {
+                resultLabel.setText("Factorial: " + calculateFactorial(number));
+            } else if (e.getSource() == primeButton) {
+                resultLabel.setText(number + " is " + (isPrime(number) ? "Prime" : "Not Prime"));
+            }
+        } catch (NumberFormatException ex) {
+            resultLabel.setText("Please enter a valid integer.");
+        }
+    }
+
+    private int calculateFactorial(int n) {
+        if (n == 0 || n == 1) return 1;
+        return n * calculateFactorial(n - 1);
+    }
+
+    private boolean isPrime(int n) {
+        if (n <= 1) return false;
+        for (int i = 2; i <= Math.sqrt(n); i++) {
+            if (n % i == 0) return false;
+        }
+        return true;
+    }
+}
+```
+
+### 2. HTML File to run the applet
+
+The HTML file to run the applet in a browser or applet viewer.
+
+```html
+<html>
+    <body>
+        <applet code="FactorialPrimeApplet.class" width="400" height="200"></applet>
+    </body>
+</html>
+```
+
+## How to Run
+
+1. Compile the Java applet:
+
+```bash
+javac FactorialPrimeApplet.java
+```
+
+2. Run the applet using the applet viewer with the HTML file:
+
+```bash
+appletviewer applet.html
+```
