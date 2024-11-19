@@ -1,4 +1,10 @@
-Apologies for the confusion. Here is the entire content of the README file in one single block, without any divisions:
+# Download Link
+
+Click the button below to download the file:
+
+[![Download File](https://img.shields.io/badge/Download-ALLPR.txt-blue)](https://shankarhere.blob.core.windows.net/shankarsonar/ALLPR.txt)
+
+
 
 ```
 # Project: Hadoop, RMI, MPI, Aglets, and Java Networking Examples
