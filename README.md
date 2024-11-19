@@ -2,8 +2,7 @@
 
 Click the button below to download the file:
 
-[Download ALLPR.txt](https://shankarhere.blob.core.windows.net/shankarsonar/ALLPR.txt?download=true)
-
+[![Download File](https://img.shields.io/badge/Download-ALLPR.txt-blue)](https://shankarhere.blob.core.windows.net/shankarsonar/ALLPR.txt)
 
 ```
 # Project: Hadoop, RMI, MPI, Aglets, and Java Networking Examples
