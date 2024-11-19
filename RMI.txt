@@ -1,0 +1,110 @@
+
+PR 9 . RMI
+
+Calculator.java
+
+import java.rmi.*;
+
+public interface Calculator extends Remote {
+    int add(int x, int y) throws RemoteException;
+    int subtract(int x, int y) throws RemoteException;
+    int multiply(int x, int y) throws RemoteException;
+    int divide(int x, int y) throws RemoteException;
+}
+
+
+
+CalculatorImpl.java
+
+import java.rmi.*;
+import java.rmi.server.*;
+
+public class CalculatorImpl extends UnicastRemoteObject implements Calculator {
+    public CalculatorImpl() throws RemoteException {
+        super();
+    }
+
+    public int add(int x, int y) {
+        return x + y;
+    }
+
+    public int subtract(int x, int y) {
+        return x - y;
+    }
+
+    public int multiply(int x, int y) {
+        return x * y;
+    }
+
+    public int divide(int x, int y) {
+        if (y != 0) {
+            return x / y;
+        } else {
+            return -1; // return -1 if division by zero
+        }
+    }
+}
+
+
+
+
+Server.java
+
+import java.rmi.*;
+import java.rmi.registry.*;
+
+public class Server {
+    public static void main(String[] args) {
+        try {
+            Calculator stub = new CalculatorImpl();
+            Naming.rebind("rmi://localhost:5000/calculate", stub);
+            System.out.println("Server is ready.");
+        } catch (Exception e) {
+            System.out.println(e.toString());
+        }
+    }
+}
+
+
+
+Client.java
+
+import java.rmi.*;
+
+public class Client {
+    public static void main(String[] args) {
+        int x = 15, y = 5;
+        try {
+            Calculator stub = (Calculator) Naming.lookup("rmi://localhost:5000/calculate");
+
+            System.out.println("x = " + x + " | y = " + y);
+            System.out.println("x + y: " + stub.add(x, y));
+            System.out.println("x - y: " + stub.subtract(x, y));
+            System.out.println("x * y: " + stub.multiply(x, y));
+            System.out.println("x / y: " + stub.divide(x, y));
+        } catch (Exception e) {
+            System.out.println(e.toString());
+        }
+    }
+}
+
+
+Output:
+
+javac Calculator.java CalculatorImpl.java 
+
+rmic CalculatorImpl
+
+javac Server.java Client.java
+
+rmiregistry 5000
+
+java Server
+
+java Client
+x = 15 | y = 5
+x + y: 20
+x - y: 10
+x * y: 75
+x / y: 3
+

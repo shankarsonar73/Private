@@ -1,0 +1,36 @@
+
+
+PR.8  Aglets
+First Extract this zip in Home Dir
+go to: /java/aglet/bin>
+
+
+chmod 755 ant
+
+./ant
+
+ant install-home
+
+export AGLETS_HOME=/java/aglet
+
+export AGLETS_PATH=$AGLETS_HOME
+
+export PATH=$PATH:$AGLETS_HOME/bin
+
+
+agletsd -f ../cnf/aglets.props    or  agletsd     orr ./agletsd
+
+username :anonymous  or aglet_key
+pass : aglets
+
+
+MyAglet.java
+
+package myfirst;
+import com.ibm.aglet.*;
+public class MyAglet extends Aglet {
+public void run() {
+System.out.println("Hello, world!");
+setText("you can see this in the Tahiti window");
+}
+}

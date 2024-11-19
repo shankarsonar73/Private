@@ -1,0 +1,220 @@
+ls /usr/lib/jvm
+
+export JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64 
+export PATH=$JAVA_HOME/bin:$PATH
+which java
+export HADOOP_HOME=/home/cnlab/Desktop/DC/hadoop-2.10.2
+export PATH=$HADOOP_HOME/bin:$PATH
+
+hadoop com.sun.tools.javac.Main MaxTemperature.java MaxTemperatureMapper.java MaxTemperatureReducer.java
+
+jar cf wc.jar MaxTemperature.class MaxTemperatureMapper.class MaxTemperatureReducer.class
+
+hadoop jar wc.jar MaxTemperature 1901 output
+
+cat output/*
+
+
+
+Codes: PR 7 and 5(MinTemperature)
+
+MinTemperature.java
+
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+
+public class MinTemperature {
+
+  public static void main(String[] args) throws Exception {
+	if (args.length != 2) {
+  	System.err.println("Usage: MinTemperature <input path> <output path>");
+  	System.exit(-1);
+	}
+    
+	Job job = new Job();
+	job.setJarByClass(MinTemperature.class);
+	job.setJobName("Min temperature");
+
+	FileInputFormat.addInputPath(job, new Path(args[0]));
+	FileOutputFormat.setOutputPath(job, new Path(args[1]));
+    
+	job.setMapperClass(MinTemperatureMapper.class);
+	job.setReducerClass(MinTemperatureReducer.class);
+
+	job.setOutputKeyClass(Text.class);
+	job.setOutputValueClass(IntWritable.class);
+    
+	System.exit(job.waitForCompletion(true) ? 0 : 1);
+  }
+}
+
+
+
+MInTemperatureMapper.java
+
+import java.io.IOException;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Mapper;
+
+public class MinTemperatureMapper extends Mapper<LongWritable, Text, Text, IntWritable> {
+
+  private static final int MISSING = 9999;
+ 
+  @Override
+  public void map(LongWritable key, Text value, Context context)
+  	throws IOException, InterruptedException {
+    
+	String line = value.toString();
+	// Assuming the sensor ID is in a specific position, let's say 0 to 10
+	String sensorId = line.substring(0, 10).trim();  // Adjust this according to your actual data format
+	int airTemperature;
+    
+	if (line.charAt(87) == '+') {
+  	airTemperature = Integer.parseInt(line.substring(88, 92));
+	} else {
+  	airTemperature = Integer.parseInt(line.substring(87, 92));
+	}
+    
+	String quality = line.substring(92, 93);
+	if (airTemperature != MISSING && quality.matches("[01459]")) {
+  	context.write(new Text(sensorId), new IntWritable(airTemperature));
+	}
+  }
+}
+
+MInTemperatureReducer.java
+
+import java.io.IOException;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Reducer;
+
+public class MinTemperatureReducer extends Reducer<Text, IntWritable, Text, IntWritable> {
+
+  @Override
+  public void reduce(Text key, Iterable<IntWritable> values, Context context)
+  	throws IOException, InterruptedException {
+    
+	int minValue = Integer.MAX_VALUE;
+	for (IntWritable value : values) {
+  	minValue = Math.min(minValue, value.get());
+	}
+	context.write(key, new IntWritable(minValue));  // Key is sensor ID, value is min temperature
+  }
+}
+
+
+
+
+
+MaxTemperature
+
+
+// cc MaxTemperature Application to find the maximum temperature in the weather dataset
+// vv MaxTemperature
+import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+
+public class MaxTemperature {
+
+  public static void main(String[] args) throws Exception {
+    if (args.length != 2) {
+      System.err.println("Usage: MaxTemperature <input path> <output path>");
+      System.exit(-1);
+    }
+    
+    Job job = new Job();
+    job.setJarByClass(MaxTemperature.class);
+    job.setJobName("Max temperature");
+
+    FileInputFormat.addInputPath(job, new Path(args[0]));
+    FileOutputFormat.setOutputPath(job, new Path(args[1]));
+    
+    job.setMapperClass(MaxTemperatureMapper.class);
+    job.setReducerClass(MaxTemperatureReducer.class);
+
+    job.setOutputKeyClass(Text.class);
+    job.setOutputValueClass(IntWritable.class);
+    
+    System.exit(job.waitForCompletion(true) ? 0 : 1);
+  }
+}
+// ^^ MaxTemperature
+
+
+
+
+// cc MaxTemperatureMapper Mapper for maximum temperature example
+// vv MaxTemperatureMapper
+import java.io.IOException;
+
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Mapper;
+
+public class MaxTemperatureMapper
+  extends Mapper<LongWritable, Text, Text, IntWritable> {
+
+  private static final int MISSING = 9999;
+  
+  @Override
+  public void map(LongWritable key, Text value, Context context)
+      throws IOException, InterruptedException {
+    
+    String line = value.toString();
+    String year = line.substring(15, 19);
+    int airTemperature;
+    if (line.charAt(87) == '+') { // parseInt doesn't like leading plus signs
+      airTemperature = Integer.parseInt(line.substring(88, 92));
+    } else {
+      airTemperature = Integer.parseInt(line.substring(87, 92));
+    }
+    String quality = line.substring(92, 93);
+    if (airTemperature != MISSING && quality.matches("[01459]")) {
+      context.write(new Text(year), new IntWritable(airTemperature));
+    }
+  }
+}
+// ^^ MaxTemperatureMapper
+
+
+// cc MaxTemperatureReducer Reducer for maximum temperature example
+// vv MaxTemperatureReducer
+import java.io.IOException;
+
+import org.apache.hadoop.io.IntWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Reducer;
+
+public class MaxTemperatureReducer
+  extends Reducer<Text, IntWritable, Text, IntWritable> {
+  
+  @Override
+  public void reduce(Text key, Iterable<IntWritable> values,
+      Context context)
+      throws IOException, InterruptedException {
+    
+    int maxValue = Integer.MIN_VALUE;
+    for (IntWritable value : values) {
+      maxValue = Math.max(maxValue, value.get());
+    }
+    context.write(key, new IntWritable(maxValue));
+  }
+}
+// ^^ MaxTemperatureReducer
+
+
+
+
+

@@ -1,0 +1,116 @@
+
+PR 6 Calculator MultiThreadedServer 
+
+CalculatorClient.java
+
+import java.io.*;
+import java.net.*;
+
+public class CalculatorClient e{
+    private static final String SERVER_ADDRESS = "localhost";
+    private static final int SERVER_PORT = 12345;
+    private static final String SERVER_ADDRESS = "localhost"; 
+
+    public static void main(String[] args) {
+        try (Socket socket = new Socket(SERVER_ADDRESS, SERVER_PORT);
+             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+             BufferedReader consoleInput = new BufferedReader(new InputStreamReader(System.in))) {
+
+            System.out.println("Connected to server. Enter two numbers:");
+
+            String userInput = consoleInput.readLine();
+            out.println(userInput);
+
+            String serverResponse = in.readLine();
+            System.out.println(serverResponse); 
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+
+MultiThreadedServer.java
+
+import java.io.*;
+import java.net.*;
+
+public class MultiThreadedServer {
+    private static final int PORT = 12345;
+
+    public static void main(String[] args) {
+        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
+            System.out.println("Server started on port: " + PORT);
+            while (true) {
+                Socket clientSocket = serverSocket.accept();
+                System.out.println("New client connected: " + clientSocket.getInetAddress().getHostAddress());
+                new ClientHandler(clientSocket).start();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+class ClientHandler extends Thread {
+    private final Socket socket;
+    public ClientHandler(Socket socket) {
+        this.socket = socket;
+    }
+
+    @Override
+    public void run() {
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+             PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
+            String inputLine;
+            while ((inputLine = in.readLine()) != null) {
+                String response = processCommand(inputLine);
+                out.println(response);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                socket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private String processCommand(String command) {
+        String[] parts = command.split(" ");
+        if (parts.length != 2) {
+            return "Invalid command. Use format: [number1] [number2]";
+        }
+
+        try {
+            double num1 = Double.parseDouble(parts[0]);
+            double num2 = Double.parseDouble(parts[1]);
+  
+            double sum = num1 + num2;
+            double difference = num1 - num2;
+            double product = num1 * num2;
+            String divisionResult = num2 != 0 ? String.valueOf(num1 / num2) : "Error: Division by zero";
+            
+            return String.format("Results: Addition: %.2f, Subtraction: %.2f, Multiplication: %.2f, Division: %s",
+                                 sum, difference, product, divisionResult);
+        } catch (NumberFormatException e) {
+            return "Invalid number format.";
+        }
+    }
+}
+
+Output :
+
+javac MultiThreadedServer.java CalculatorClient.java
+
+java MultiThreadedServer
+
+
+In another Terminal :
+
+java CalculatorClient
+

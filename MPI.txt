@@ -1,0 +1,125 @@
+
+MPI PR 10.
+
+mpi_avg.c
+
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <mpi.h>
+
+int main(int argc, char *argv[])
+{
+    int rank, size;
+    int *array = NULL;
+    int local_sum = 0, global_sum = 0;
+    double average = 0.0;
+    int local_N, N, remainder;
+
+    MPI_Init(&argc, &argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    // Input array size and values (by rank 0)
+    if (rank == 0)
+    {
+        printf("Enter the size of the array: ");
+        scanf("%d", &N);
+
+        array = (int *)malloc(N * sizeof(int));
+        printf("Enter %d values for the array:\n", N);
+        for (int i = 0; i < N; i++)
+        {
+            printf("array[%d]: ", i);
+            scanf("%d", &array[i]);
+        }
+    }
+
+    // Broadcast array size to all processes
+    MPI_Bcast(&N, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    // Determine local size and remainder
+    local_N = N / size;
+    remainder = N % size;
+    if (rank < remainder)
+    {
+        local_N += 1;
+    }
+
+    // Allocate memory for local array
+    int *local_array = (int *)malloc(local_N * sizeof(int));
+
+    // Prepare sendcounts and displacements
+    int *sendcounts = NULL, *displs = NULL;
+    if (rank == 0)
+    {
+        sendcounts = (int *)malloc(size * sizeof(int));
+        displs = (int *)malloc(size * sizeof(int));
+
+        int offset = 0;
+        for (int i = 0; i < size; i++)
+        {
+            sendcounts[i] = N / size + (i < remainder ? 1 : 0);
+            displs[i] = offset;
+            offset += sendcounts[i];
+        }
+    }
+
+    // Scatter the data among processes
+    MPI_Scatterv(array, sendcounts, displs, MPI_INT, local_array, local_N, MPI_INT, 0, MPI_COMM_WORLD);
+
+    // Calculate local sum
+    for (int i = 0; i < local_N; i++)
+    {
+        local_sum += local_array[i];
+    }
+
+    printf("Rank %d: Local sum = %d\n", rank, local_sum);
+
+    // Reduce local sums into the global sum
+    MPI_Reduce(&local_sum, &global_sum, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+
+    // Calculate average at root
+    if (rank == 0)
+    {
+        average = (double)global_sum / N;
+        printf("Total sum: %d\n", global_sum);
+        printf("Average: %f\n", average);
+
+        free(array);
+        free(sendcounts);
+        free(displs);
+    }
+
+    free(local_array);
+
+    MPI_Finalize();
+    return 0;
+}
+
+
+
+mpicc -o mpi_avg mpi_avg.c
+
+
+mpirun -np 4 ./mpi_avg
+
+
+Enter the size of the array: 8
+Enter 8 values for the array:
+array[0]: 10
+array[1]: 20
+array[2]: 30
+array[3]: 40
+array[4]: 50
+array[5]: 60
+array[6]: 70
+array[7]: 80
+Rank 0: Local sum = 30
+Rank 1: Local sum = 70
+Rank 2: Local sum = 110
+Rank 3: Local sum = 150
+Total sum: 360
+Average: 45.000000
+
+
