@@ -2,8 +2,7 @@
 
 Click the button below to download the file:
 
-[![Download File](https://img.shields.io/badge/Download-ALLPR.txt-blue)](https://shankarhere.blob.core.windows.net/shankarsonar/ALLPR.txt)
-
+[Download ALLPR.txt](https://shankarhere.blob.core.windows.net/shankarsonar/ALLPR.txt?download=true)
 
 
 ```
